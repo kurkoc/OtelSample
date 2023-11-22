@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using OtelSample;
@@ -38,9 +39,13 @@ builder.Services
             })
             .AddSqlClientInstrumentation()
             .AddHttpClientInstrumentation()
-            .AddConsoleExporter()
             .AddJaegerExporter()
             .AddSource("net-otel-sample");
+        })
+        .WithMetrics(metrics => {
+            metrics.AddAspNetCoreInstrumentation()
+            .AddConsoleExporter()
+            .AddPrometheusExporter();
         });
 
 
@@ -49,5 +54,7 @@ var app = builder.Build();
 app.MapGet("/", ()=> "it works!");
 
 app.MapEmployeeEndpoints();
+
+app.MapPrometheusScrapingEndpoint();
 
 app.Run();
